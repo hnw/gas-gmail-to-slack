@@ -1,10 +1,12 @@
-function gmailToSlack(searchStr: string, messageModifier: (msg: GoogleAppsScript.Gmail.GmailMessage) => any, messageSender: (data: any) => void) {
-    if (searchStr === "") {
-        searchStr = "in:unread";
-    } else {
+function gmailToSlack(messageModifier: (msg: GoogleAppsScript.Gmail.GmailMessage) => any, messageSender: (data: any) => void) {
+    const props = PropertiesService.getScriptProperties().getProperties();
+    let searchStr = props["GMAIL_SEARCH_STR"];
+    if (searchStr) {
         searchStr = `in:unread AND (${searchStr})`;
+    } else {
+        searchStr = "in:unread";
     }
-    const threads = GmailApp.search(searchStr);
+    const threads = GmailApp.search(searchStr).reverse();
     threads.forEach(thread => {
         thread.getMessages().map(messageModifier).map(messageSender)
         thread.markRead();
@@ -12,27 +14,27 @@ function gmailToSlack(searchStr: string, messageModifier: (msg: GoogleAppsScript
 }
 
 function messageToAttachment(msg: GoogleAppsScript.Gmail.GmailMessage) {
+    const props = PropertiesService.getScriptProperties().getProperties();
     return {
-            "attachments": [
-                {
-                    title: msg.getSubject(),
-                    text: msg.getPlainBody(),
-                    footer: msg.getFrom(),
-                    ts: Math.floor(msg.getDate().valueOf() / 1000),
-                }
-            ]
-        }
+        "attachments": [
+            {
+                pretext: props['SLACK_PRETEXT'],
+                title: msg.getSubject(),
+                text: "　\n" + msg.getPlainBody(),
+                footer: msg.getFrom(),
+                ts: Math.floor(msg.getDate().valueOf() / 1000),
+            }
+        ]
     };
 }
 
 function attachmentToSlack(data: any): boolean {
-    const props = PropertiesService.getScriptProperties();
-    const SLACK_API_ENDPOINT = props.getProperty('SLACK_API_ENDPOINT')
-    if (SLACK_API_ENDPOINT === null) {
-        props.setProperty("SLACK_API_ENDPOINT", "");
+    const props = PropertiesService.getScriptProperties().getProperties();
+    const SLACK_API_ENDPOINT = props['SLACK_API_ENDPOINT']
+    if (SLACK_API_ENDPOINT === undefined) {
+        PropertiesService.getScriptProperties().setProperty("SLACK_API_ENDPOINT", "");
         return false;
     }
-    const SLACK_USERNAME = props.getProperty('SLACK_USERNAME') || 'gmail2slack';
     const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
         method: "post",
         contentType: "application/json",
@@ -42,5 +44,5 @@ function attachmentToSlack(data: any): boolean {
 }
 
 function main(): void {
-    gmailToSlack("", messageToAttachment, attachmentToSlack)
+    gmailToSlack(messageToAttachment, attachmentToSlack)
 }
