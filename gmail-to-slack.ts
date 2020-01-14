@@ -13,6 +13,13 @@ function gmailToSlack(messageModifier: (msg: GoogleAppsScript.Gmail.GmailMessage
     })
 }
 
+function decodeHtmlEntity(str: string): string {
+    str = str.replace(/&nbsp;/g, " ");
+    return str.replace(/&#(\d+);/g, function(match, dec) {
+        return String.fromCharCode(dec);
+    });
+}
+
 /** HTMLメールを平文にする
  *   - headタグの内側は全部削る（単にタグだけ削るとCSSが平文として残る）
  *   - aタグはhrefのリンク先だけ残す
@@ -23,8 +30,11 @@ function html2text(html: string): string {
     const headers = /<head>[\s\S]*<\/head>/i;
     const anchors = /<a(\s+[^>]+)*\s+href="([^"]*)"(\s+[^>]+)*>/ig;
     const tags = /<[^>]*>/g;
-    const newlines = /(\s*\n){2,}/g;
-    return html.replace(headers, "").replace(anchors, "$2\n").replace(tags, "").replace(newlines, "\n\n");
+    const nbsp = /&nbsp;/g;
+    const headingemptylines = /^(\s*\n)+/;
+    const emptylines = /(\s*\n){2,}/g;
+    const plaintext = decodeHtmlEntity(html);
+    return plaintext.replace(headers, "").replace(anchors, "$2\n").replace(tags, "").replace(headingemptylines, "").replace(emptylines, "\n \n");
 }
 
 function messageToAttachment(msg: GoogleAppsScript.Gmail.GmailMessage) {
@@ -35,7 +45,7 @@ function messageToAttachment(msg: GoogleAppsScript.Gmail.GmailMessage) {
             {
                 pretext: props['SLACK_PRETEXT'],
                 title: msg.getSubject(),
-                text: "　\n" + html2text(msg.getBody()),
+                text: "　\n" + html2text(msg.getBody()), // 1行目を空行にするため全角スペースを利用
                 footer: msg.getFrom(),
                 ts: Math.floor(msg.getDate().valueOf() / 1000),
             }
