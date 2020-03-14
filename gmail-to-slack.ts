@@ -32,7 +32,7 @@ function html2text(html: string): string {
     const tags = /<[^>]*>/g;
     const nbsp = /&nbsp;/g;
     const headingemptylines = /^(\s*\n)+/;
-    const emptylines = /(\s*\n){2,}/g;
+    const emptylines = /([ \t\r]*\n){2,}/g;
     const plaintext = decodeHtmlEntity(html);
     return plaintext.replace(headers, "").replace(anchors, "$2\n").replace(tags, "").replace(headingemptylines, "").replace(emptylines, "\n \n");
 }
