@@ -29,7 +29,7 @@ function decodeHtmlEntity(str: string): string {
 function html2text(html: string): string {
     const headers = /<head>[\s\S]*<\/head>/i;
     const anchors = /<a(\s+[^>]+)*\s+href="([^"]*)"(\s+[^>]+)*>/ig;
-    const tags = /<[^>]*>/g;
+    const tags = /<\/?[a-z\d][^>]*>/ig;
     const nbsp = /&nbsp;/g;
     const headingemptylines = /^(\s*\n)+/;
     const emptylines = /([ \t\r]*\n){2,}/g;
