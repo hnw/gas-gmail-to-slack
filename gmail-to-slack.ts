@@ -30,11 +30,13 @@ function html2text(html: string): string {
     const headers = /<head>[\s\S]*<\/head>/i;
     const anchors = /<a(\s+[^>]+)*\s+href="([^"]*)"(\s+[^>]+)*>/ig;
     const tags = /<\/?[a-z\d][^>]*>/ig;
+    const comments = /<!--.*?-->/sg;
+    const doctypedecl = /<!DOCTYPE\s+[^>[]*(\[[^]]*\]\s*)?>/g;
     const nbsp = /&nbsp;/g;
     const headingemptylines = /^(\s*\n)+/;
     const emptylines = /([ \t\r]*\n){2,}/g;
     const plaintext = decodeHtmlEntity(html);
-    return plaintext.replace(headers, "").replace(anchors, "$2\n").replace(tags, "").replace(headingemptylines, "").replace(emptylines, "\n \n");
+    return plaintext.replace(headers, "").replace(anchors, "$2\n").replace(tags, "").replace(comments, "").replace(doctypedecl, "").replace(headingemptylines, "").replace(emptylines, "\n \n");
 }
 
 function messageToAttachment(msg: GoogleAppsScript.Gmail.GmailMessage) {
