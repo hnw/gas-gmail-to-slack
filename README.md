@@ -2,14 +2,14 @@
 
 Gmail APIを利用して未読メールをSlackの指定チャンネルに転送する Google App Script (GAS) です。
 
-これはSlackの公式App「Email」に似た機能を実現するものです。EmailはHTMLメールをかっこよくSlack上で再現してくれますが、`gas-gmail-to-slack` は最低限の文字情報をSlackに転送します。
+これはSlackの公式App「[Email](https://slack.com/apps/A0F81496D-email)」に似た機能を実現するものです。EmailはHTMLメールをかっこよくSlack上で再現してくれますが、`gas-gmail-to-slack` は最低限の文字情報をSlackに転送します。
 
 `gas-gmail-to-slack`のメリットとしてSlackの無料プランでも利用可能な点が挙げられます。
 
 ## 利用例
 
 * cronからのメール通知をSlackチャンネルに転送する
-* クレジットカード引落の失敗通知など重要なメールをSlackチャンネルに転送する
+* ドメイン更新連絡など重要な割に見逃しやすいメールをSlackチャンネルに転送する
 
 ## 仕様・制限
 
