@@ -64,7 +64,7 @@ GASはGmailと同じアカウントでないと動作しません。`clasp login
 | USE_HTMLBODY       | HTMLメールを転送するかどうか（任意、デフォルト値:false） |
 | GMAIL_SEARCH_STR   | Gmailの検索条件（任意）                                  |
 
-Incoming WebhookのURLはAppとチャンネルに紐付くもので、App設定ページの「Incoming Webhook」で確認できます。古い方のIncoming Webhook（カスタムインテグレーション）でも動くと思いますが未確認です。
+Incoming WebhookのURLはAppとチャンネルに紐付くもので、[App設定ページ](https://api.slack.com/apps)の「Incoming Webhook」で確認できます。古い方のIncoming Webhook（カスタムインテグレーション）でも動くと思いますが未確認です。
 
 Gmailの検索条件を設定しないとGmailアカウントに届いた全てのメールをSlackに転送します。専用アカウントを作った場合はこれで問題ないと思いますが、Slackに表示したくないメールがあるようならGmailの振り分け機能を使ってSlackに転送したいメールにタグをつけ、それを`GMAIL_SEARCH_STR`で指定すれば良いでしょう。
 
