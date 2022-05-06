@@ -43,7 +43,7 @@ $ npm install -g @google/clasp
 $ npm install -g typescript
 $ npm i
 $ clasp login
-$ clasp create
+$ clasp create --title gmail-to-slack --type sheets --rootDir ./src
 $ clasp push
 ```
 
