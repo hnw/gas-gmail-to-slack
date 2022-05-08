@@ -2,7 +2,7 @@
 
 Gmail APIを利用して未読メールをSlackの指定チャンネルに転送する Google App Script (GAS) です。
 
-これはSlackの公式App「[Email](https://slack.com/apps/A0F81496D-email)」に似た機能を実現するものです。EmailはHTMLメールをかっこよくSlack上で再現してくれますが、gas-gmail-to-slack は最低限の文字情報をSlackに転送します。また、Emailに比べると設定が煩雑です。
+これはSlackの公式App「[Email](https://slack.com/apps/A0F81496D-email)」に似た機能を実現するものです。公式AppはHTMLメールをかっこよくSlack上で再現してくれますが、gas-gmail-to-slack は最低限の文字情報をSlackに転送します。また、公式Appに比べると設定が煩雑です。
 
 gas-gmail-to-slack のメリットとしてSlackの無料プランでも利用可能な点、メールの前に付けるテキストをカスタマイズできる点が挙げられます。
 
@@ -47,34 +47,39 @@ $ clasp create --title gmail-to-slack --type sheets --rootDir ./src
 $ clasp push
 ```
 
-GASはGmailと同じアカウントでないと動作しません。`clasp login`でGASのログインを求められますが、専用Gmailアカウントを使う場合はそちらのアカウントでログインする必要があります。
+このGASはスプレッドシートに紐付いたスクリプトとして使われる前提で作られていますので、`clasp create`のオプション指定でスプレッドシートを指定します。このスプレッドシートは設定ファイルとして利用します。
 
-## 設定
+また、このGASはメールと同じアカウントで動作させる前提になっています。`clasp login`でGASのログインを求められますが、専用Gmailアカウントを使う場合はそちらのアカウントでログインする必要があります。
 
-設定にはGASのプロパティ機能を利用します。これはGASの設定画面から「ファイル」「プロジェクトのプロパティ」「スクリプトのプロパティ」でアクセスできます。
+## 設定（スプレッドシート）
 
-![GAS property example](https://github.com/hnw/gas-gmail-to-slack/blob/master/doc/gas-property.png?raw=true)
+既に説明した通り、設定にはスプレッドシートの1枚目のシートを利用します。
 
-設定できる値は以下の通りです。
+![configuration with spreadsheet](https://github.com/hnw/gas-gmail-to-slack/blob/master/doc/config-spreadsheet.png?raw=true)
 
-| プロパティ         | 値                                                       |
+GAS中にスプレッドシートのひな形を作る関数 `initConfigSpreadsheet()` があるので、初回のGASデプロイの後で実行してみてください。
+
+シート内の1行につき1組の設定を記述します。設定できる値は以下の通りです。
+
+| 変数名             | 値                                                       |
 |--------------------|----------------------------------------------------------|
 | SLACK_API_ENDPOINT | Incoming WebhookのURL、スペース区切りで複数指定が可能    |
 | SLACK_PRETEXT      | Slack投稿時にメール本文の前につける説明文（任意）        |
 | USE_HTMLBODY       | HTMLメールを転送するかどうか（任意、デフォルト値:false） |
-| GMAIL_SEARCH_STR   | Gmailの検索条件（任意）                                  |
 
 Incoming WebhookのURLはAppとチャンネルに紐付くもので、[App設定ページ](https://api.slack.com/apps)の「Incoming Webhook」で確認できます。古い方のIncoming Webhook（カスタムインテグレーション）でも動くと思いますが未確認です。
 
-Gmailの検索条件を設定しないとGmailアカウントに届いた全てのメールをSlackに転送します。専用アカウントを作った場合はこれで問題ないと思いますが、Slackに表示したくないメールがあるようならGmailの振り分け機能を使ってSlackに転送したいメールにタグをつけ、それを`GMAIL_SEARCH_STR`で指定すれば良いでしょう。
+A列にはメールアドレスを書きます。後述する通り、メールアドレスごとに挙動を変えることができます。どのメールアドレスにも該当しなかった場合、先頭の設定（＝2行目）が採用されます。
 
-最後にスケジュール実行の設定をしてください。私は1時間に1回起動していますが、即時性が重要な場合は1分1回などとしても良いでしょう。
+## 複数の設定を使い分ける
 
-これでメールが届いたらSlackに転送されるはずです。
+Gmailではメールアドレスのローカルパート（@の前の部分）に+記号をつけ、その後に任意の文字列を付加したようなメールアドレスがエイリアスとして機能します。たとえば、gmail2slack@gmail.comがあなたのメールアドレスだとすれば、gmail2slack+abracadabra@gmail.comというメールアドレス宛のメールも同じアカウントで受け取れるというわけです。
 
-## メンションの指定方法
+これを利用して、メールエイリアスごとに投稿するSlackの部屋を変えるなど設定を使い分けることができます。
 
-すでに説明した通り、スクリプトプロパティ`SLACK_PRETEXT`を使えば任意の文字列をメール本文の前に追加することができます。
+## PRETEXTでメンションを指定する
+
+すでに説明した通り、`SLACK_PRETEXT`を指定すれば任意の文字列をメール本文の前に追加することができます。
 
 この機能を使えば、個人やチャンネル全体にメンションを指定することもできます。ただし、普段のSlackクライアントとは書き方が変わる点に注意してください。
 
@@ -87,19 +92,27 @@ Gmailの検索条件を設定しないとGmailアカウントに届いた全て�
 
 参考：[Formatting text for app surfaces \| Slack](https://api.slack.com/reference/surfaces/formatting#mentioning-users)
 
-## 複数の設定を使い分ける
+## 設定（スクリプトプロパティ）
 
-Gmailではメールアドレスのローカルパート（@の前の部分）に+記号をつけ、その後任意の文字列を付加したようなメールアドレスもエイリアスとして機能します。たとえば、gmail2slack@gmail.comがあなたのメールアドレスだとすれば、gmail2slack+abracadabra@gmail.comというメールアドレス宛のメールも同じアカウントで受け取れるというわけです。
+一部の設定についてはGASのスクリプトプロパティを利用します。これはGASエディタから「プロジェクトの設定」「スクリプトプロパティ」でアクセスできます。
 
-これを利用して、メールエイリアスごとに設定を使い分けることができます。
+![configuration with script property](https://github.com/hnw/gas-gmail-to-slack/blob/master/doc/gas-property.png?raw=true)
 
-メールエイリアスに対応する設定は、+以降の文字列をサフィックスとして付加したスクリプトプロパティを利用します。つまり、上の例であれば`ABRACADABRA_SLACK_API_ENDPOINT`を設定すれば投稿先のSlackワークスペース・チャンネルを切り替えることができます。
+設定できる値は以下の通りです。
 
-メールエイリアスで切り替え可能なスクリプトプロパティは以下の通りです。
+| プロパティ名        | 値                                                       |
+|--------------------|----------------------------------------------------------|
+| GMAIL_SEARCH_STR   | Gmailの検索条件（任意）                                  |
 
-- `SLACK_API_ENDPOINT`
-- `SLACK_PRETEXT`
-- `USE_HTMLBODY`
+Gmailの検索条件を設定しないとGmailアカウントに届いた全てのメールをSlackに転送します。専用アカウントを作った場合はそれでも問題ないと思いますが、Slackに表示したくないメールも届くような場合はGmailの振り分け機能を使ってSlackに転送したいメールにタグをつけ、それを`GMAIL_SEARCH_STR`で指定すれば良いでしょう。
+
+## GASのトリガー設定
+
+Gmailに未読メールが数通ある状態でGASエディタから`gmailToSlack()`を「実行」してみてください。未読メールが既読になり、メールがSlackに転送されれば成功です。再度テストする場合はGmailから対象メールを未読に戻してください。
+
+手動実行がうまくいったら、「トリガー」「トリガーの追加」からスケジュール実行の設定をしてください。私は1時間に1回で設定していますが、即時性が重要な場合は1分1回などとしても良いでしょう。
+
+以後、メールが届いたら自動的にSlackに転送されるはずです。
 
 ## See also
 
