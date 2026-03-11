@@ -1,16 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  decodeHtmlEntity,
-  html2text,
-  minimizeEmptyLines,
-} from '../src/text-utils';
-
-describe('decodeHtmlEntity', () => {
-  it('decodes nbsp and numeric entities', () => {
-    expect(decodeHtmlEntity('A&nbsp;&#66;')).toBe('A B');
-  });
-});
+import { html2text, minimizeEmptyLines } from '../src/text-utils';
 
 describe('html2text', () => {
   it('strips tags but keeps anchor href', () => {
@@ -18,6 +8,11 @@ describe('html2text', () => {
       '<!DOCTYPE html><head><style>.x{color:red;}</style></head><body><!--comment--><a href="https://example.com">link</a><p>Hello&nbsp;world</p></body>';
 
     expect(html2text(html)).toBe('https://example.com\nlinkHello world');
+  });
+
+  it('decodes nbsp and numeric entities correctly within HTML', () => {
+    const html = '<p>A&nbsp;&#66;</p>';
+    expect(html2text(html)).toBe('A B');
   });
 });
 

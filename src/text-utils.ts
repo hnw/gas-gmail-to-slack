@@ -1,9 +1,4 @@
-export function decodeHtmlEntity(str: string): string {
-  const withSpaces = str.replace(/&nbsp;/g, ' ');
-  return withSpaces.replace(/&#(\d+);/g, (_match, dec: string) =>
-    String.fromCharCode(Number(dec)),
-  );
-}
+import * as cheerio from 'cheerio';
 
 /** HTMLメールを平文にする
  *   - headタグの内側は全部削る（単にタグだけ削るとCSSが平文として残る）
@@ -11,18 +6,24 @@ export function decodeHtmlEntity(str: string): string {
  *   - その他のタグは全部削る
  */
 export function html2text(html: string): string {
-  const headers = /<head>[\s\S]*<\/head>/i;
-  const anchors = /<a(\s+[^>\s]+)*\s+href="([^"]*)"[^>]*>/gi;
-  const tags = /<\/?[a-z\d][^>]*>/gi;
-  const comments = /<!--.*?-->/gs;
-  const docTypeDecl = /<!DOCTYPE\s+[^>[]*(\[[^\]]*\]\s*)?>/gi;
+  const $ = cheerio.load(html);
 
-  return decodeHtmlEntity(html)
-    .replace(headers, '')
-    .replace(anchors, '$2\n')
-    .replace(tags, '')
-    .replace(comments, '')
-    .replace(docTypeDecl, '');
+  // 不要なタグの削除
+  $('head, style, script, noscript, title').remove();
+
+  // <a>タグの処理: hrefの値をテキストの先頭に付与
+  $('a').each((_i, el) => {
+    const $el = $(el);
+    const href = $el.attr('href');
+    if (href) {
+      $el.prepend(`${href}\n`);
+    }
+  });
+
+  // テキストを抽出し、&nbsp; を半角スペースに戻す（古い正規表現の挙動に合わせる）
+  return $.root()
+    .text()
+    .replace(/\u00A0/g, ' ');
 }
 
 /** 改行をSlack用に削る
