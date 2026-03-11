@@ -90,7 +90,7 @@ function getProp(name: string): string {
  */
 function html2text(html: string): string {
     const headers = /<head>[\s\S]*<\/head>/i;
-    const anchors = /<a(\s+[^>]+)*\s+href="([^"]*)"(\s+[^>]+)*>/ig;
+    const anchors = /<a(\s+[^>\s]+)*\s+href="([^"]*)"[^>]*>/ig;
     const tags = /<\/?[a-z\d][^>]*>/ig;
     const comments = /<!--.*?-->/sg;
     const doctypedecl = /<!DOCTYPE\s+[^>[]*(\[[^]]*\]\s*)?>/g;
