@@ -61,3 +61,6 @@ typings/
 .next
 
 /.clasp.json
+*~
+repomix-output.xml
+dist/
